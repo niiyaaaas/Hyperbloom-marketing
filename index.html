@@ -399,6 +399,10 @@
 
                 <div class="contact-form-wrapper animate-on-scroll delay-1">
                     <form class="contact-form" id="contactForm">
+                        <!-- Hidden fields for the API -->
+                        <input type="hidden" id="site" value="hyperbloom">
+                        <input type="text" id="honeypot" style="display:none;" tabindex="-1" autocomplete="off">
+
                         <div class="form-group slide-up">
                             <input type="text" id="name" required placeholder=" ">
                             <label for="name">Your Name</label>

@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Contact Form ---
     const form = document.getElementById("contactForm");
     if (form) {
-        form.addEventListener("submit", (e) => {
+        form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const btn = form.querySelector(".submit-btn");
@@ -218,23 +218,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.innerHTML = "<span class=\"btn-text\">Sending...</span>";
             btn.style.opacity = "0.7";
+            btn.disabled = true;
 
-            setTimeout(() => {
-                btn.innerHTML = "<span class=\"btn-text\">Request Sent!</span><span class=\"btn-icon\">✓</span>";
-                btn.style.opacity = "1";
-                btn.classList.remove("btn-primary");
-                btn.style.background = "#22c55e";
-                btn.style.borderColor = "#22c55e";
+            // Combine some custom fields into the single message field expected by API
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim() || 'Not Provided';
+            const business = document.getElementById("business").value.trim();
+            const rawMessage = document.getElementById("message").value.trim();
+            const site = document.getElementById("site").value;
+            const honeypot = document.getElementById("honeypot").value;
 
-                form.reset();
+            const combinedMessage = `Business: ${business}\nPhone: ${phone}\n\nMessage:\n${rawMessage}`;
 
-                setTimeout(() => {
+            const payload = {
+                name: name,
+                email: email,
+                message: combinedMessage,
+                site: site,
+                honeypot: honeypot
+            };
+
+            try {
+                // Send to the Vercel API URL
+                const response = await fetch('https://contact-api-chi.vercel.app/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    btn.innerHTML = "<span class=\"btn-text\">Request Sent!</span><span class=\"btn-icon\">✓</span>";
+                    btn.style.opacity = "1";
+                    btn.classList.remove("btn-primary");
+                    btn.style.background = "#22c55e";
+                    btn.style.borderColor = "#22c55e";
+
+                    form.reset();
+
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = "";
+                        btn.style.borderColor = "";
+                        btn.classList.add("btn-primary");
+                        btn.disabled = false;
+                    }, 4000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join(', ') : data.message;
+                    alert("Error: " + errorMsg);
                     btn.innerHTML = originalText;
-                    btn.style.background = "";
-                    btn.style.borderColor = "";
-                    btn.classList.add("btn-primary");
-                }, 3000);
-            }, 1500);
+                    btn.style.opacity = "1";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert("Network Error: Could not reach the API.");
+                console.error(error);
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
         });
     }
 
